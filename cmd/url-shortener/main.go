@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"url-shortener/internal/config"
@@ -22,7 +23,11 @@ func main() {
 		log.Error("falied to init storage", sl.Err(err))
 		os.Exit(1)
 	}
-	_ = storage
+	id, err := storage.SaveURL("test", "tst.yo")
+
+	fmt.Println(id, err)
+	url, err := storage.GetURL("ts.yo")
+	fmt.Println(url, err)
 }
 
 func setupLogger(env string) slog.Logger {

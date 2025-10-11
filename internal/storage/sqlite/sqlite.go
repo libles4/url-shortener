@@ -2,11 +2,11 @@ package sqlite
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"url-shortener/internal/storage"
 
 	"github.com/mattn/go-sqlite3"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Storage struct {
@@ -42,7 +42,7 @@ func New(storagePath string) (*Storage, error) {
 
 func (s *Storage) SaveURL(url string, alias string) (int64, error) {
 	const op = "storage.sqlite.SaveURL()"
-	stmt, err := s.db.Prepare(`INSERT INTO url VALUES (?,?);`)
+	stmt, err := s.db.Prepare(`INSERT INTO url(url, alias) VALUES(?,?);`)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -61,4 +61,25 @@ func (s *Storage) SaveURL(url string, alias string) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *Storage) GetURL(alias string) (string, error) {
+	const op = "storage.sqlite.GetURL"
+	stmt, err := s.db.Prepare(`SELECT url FROM url WHERE alias = ? `)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	var resURL string
+
+	err = stmt.QueryRow(alias).Scan(&resURL)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", fmt.Errorf("%s:%w", op, err)
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("%s: execute statement: %w", op, err)
+	}
+
+	return resURL, nil
 }
